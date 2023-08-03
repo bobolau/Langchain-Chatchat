@@ -1,5 +1,6 @@
 import torch.cuda
 import torch.backends
+from dotenv import load_dotenv
 import os
 import logging
 import uuid
@@ -9,19 +10,26 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.basicConfig(format=LOG_FORMAT)
 
+load_dotenv()  #load .env,  .env.example => .env
+
+
 # 在以下字典中修改属性值，以指定本地embedding模型存储位置
 # 如将 "text2vec": "GanymedeNil/text2vec-large-chinese" 修改为 "text2vec": "User/Downloads/text2vec-large-chinese"
 # 此处请写绝对路径
+user_home = os.path.expanduser("~")
+modelBaseDir = user_home + "/workspace/ai/models/"
+
 embedding_model_dict = {
-    "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
-    "ernie-base": "nghuyong/ernie-3.0-base-zh",
-    "text2vec-base": "shibing624/text2vec-base-chinese",
-    "text2vec": "GanymedeNil/text2vec-large-chinese",
-    "text2vec-base-multilingual": "shibing624/text2vec-base-multilingual",
-    "text2vec-base-chinese-sentence": "shibing624/text2vec-base-chinese-sentence",
-    "text2vec-base-chinese-paraphrase": "shibing624/text2vec-base-chinese-paraphrase",
-    "m3e-small": "moka-ai/m3e-small",
-    "m3e-base": "moka-ai/m3e-base",
+    "text2vec": modelBaseDir + "text2vec-large-chinese",
+    # "ernie-tiny": "nghuyong/ernie-3.0-nano-zh",
+    # "ernie-base": "nghuyong/ernie-3.0-base-zh",
+    # "text2vec-base": "shibing624/text2vec-base-chinese",
+    # "text2vec": "GanymedeNil/text2vec-large-chinese",
+    # "text2vec-base-multilingual": "shibing624/text2vec-base-multilingual",
+    # "text2vec-base-chinese-sentence": "shibing624/text2vec-base-chinese-sentence",
+    # "text2vec-base-chinese-paraphrase": "shibing624/text2vec-base-chinese-paraphrase",
+    # "m3e-small": "moka-ai/m3e-small",
+    # "m3e-base": "moka-ai/m3e-base",
 }
 
 # Embedding model name
@@ -35,6 +43,8 @@ EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backe
 # 在以下字典中修改属性值，以指定本地 LLM 模型存储位置
 # 如将 "chatglm-6b" 的 "local_model_path" 由 None 修改为 "User/Downloads/chatglm-6b"
 # 此处请写绝对路径,且路径中必须包含repo-id的模型名称，因为FastChat是以模型名匹配的
+openaiChatgptApiKey = os.getenv("openai_chatgpt_api_key")
+
 llm_model_dict = {
     "chatglm-6b-int4-qe": {
         "name": "chatglm-6b-int4-qe",
@@ -91,7 +101,7 @@ llm_model_dict = {
     "chatglm2-6b-int4": {
         "name": "chatglm2-6b-int4",
         "pretrained_model_name": "THUDM/chatglm2-6b-int4",
-        "local_model_path": None,
+        "local_model_path": modelBaseDir + "chatglm2-6b-int4",
         "provides": "ChatGLMLLMChain"
     },
     "chatglm2-6b-int8": {
@@ -222,13 +232,30 @@ llm_model_dict = {
         "provides": "FastChatOpenAILLMChain",
         "local_model_path": None,
         "api_base_url": "https://api.openai.com/v1",
-        "api_key": ""
+        "api_key": openaiChatgptApiKey
     },
 
+     # baseDir=/Users/bobo/workspace/ai/models
+     "chinese-Llama-2-7b-ggml-q4": {
+        "name": "chinese-Llama-2-7b-ggml-q4",
+        "pretrained_model_name": "chinese-Llama-2-7b-ggml-q4",
+        "provides": "ChatGLMLLMChain",
+        "local_model_path": modelBaseDir + "chinese-Llama-2-7b-ggml-q4"
+    },
+    "chinese-alpaca-2-7b": {
+        "name": "chinese-alpaca-2-7b",
+        "pretrained_model_name": "chinese-alpaca-2-7b",
+        "provides": "ChatGLMLLMChain",
+        "local_model_path": modelBaseDir + "chinese-alpaca-2-7b"
+    },
+   
 }
 
 # LLM 名称
-LLM_MODEL = "chatglm2-6b-32k"
+
+LLM_MODEL = "openai-chatgpt-3.5"
+#LLM_MODEL = "chatglm2-6b-int4"
+# LLM_MODEL = "chatglm2-6b-32k"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = False
 # Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.

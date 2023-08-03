@@ -1,6 +1,6 @@
-FROM python:3.8
+FROM python:3.10
 
-MAINTAINER "chatGLM"
+LABEL MAINTAINER "chatGLM"
 
 COPY agent /chatGLM/agent
 
