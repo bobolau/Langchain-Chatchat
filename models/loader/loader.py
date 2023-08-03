@@ -110,7 +110,7 @@ class LoaderCheckPoint:
                 checkpoint = self.pretrained_model_name
 
         print(f"Loading {checkpoint}...")
-        self.is_llamacpp = len(list(Path(f'{checkpoint}').glob('ggml*.bin'))) > 0
+        self.is_llamacpp = len(list(Path(f'{checkpoint}').glob('*ggml*.bin'))) > 0
         if 'chatglm' in self.model_name.lower() or "chatyuan" in self.model_name.lower():
             LoaderClass = AutoModel
         else:
@@ -217,7 +217,7 @@ class LoaderCheckPoint:
                     "Please install it with `pip install llama-cpp-python`."
                 ) from exc
 
-            model_file = list(checkpoint.glob('ggml*.bin'))[0]
+            model_file = list(checkpoint.glob('*ggml*.bin'))[0]
             print(f"llama.cpp weights detected: {model_file}\n")
 
             model = Llama(model_path=model_file._str)
@@ -225,11 +225,18 @@ class LoaderCheckPoint:
             # 实测llama-cpp-vicuna13b-q5_1的AutoTokenizer加载tokenizer的速度极慢，应存在优化空间
             # 但需要对huggingface的AutoTokenizer进行优化
 
+            # fix model.tokenizer is method
             # tokenizer = model.tokenizer
+            #print(type(model.tokenizer))
+            tokenizer = model.tokenizer()
+            #konwn bug: AttributeError: 'LlamaTokenizer' object has no attribute 'eos_token_id'
+            #  eos_token_id, add_bos_token
+            #print(dir(tokenizer))
+
             # todo 此处调用AutoTokenizer的tokenizer，但后续可以测试自带tokenizer是不是兼容
             # * -> 自带的tokenizer不与transoformers的tokenizer兼容,无法使用
-
-            tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            #tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            #tokenizer = AutoTokenizer.from_pretrained(self.model_path)
             return model, tokenizer
 
         elif self.load_in_8bit:

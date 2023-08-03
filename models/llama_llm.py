@@ -75,7 +75,8 @@ class LLamaLLMChain(BaseAnswer, Chain, ABC):
 
     def encode(self, prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
         input_ids = self.checkPoint.tokenizer.encode(str(prompt), return_tensors='pt',
-                                                     add_special_tokens=add_special_tokens)
+                                                   add_special_tokens=add_special_tokens)
+
         # This is a hack for making replies more creative.
         if not add_bos_token and input_ids[0][0] == self.checkPoint.tokenizer.bos_token_id:
             input_ids = input_ids[:, 1:]
@@ -88,8 +89,13 @@ class LLamaLLMChain(BaseAnswer, Chain, ABC):
         # Handling truncation
         if truncation_length is not None:
             input_ids = input_ids[:, -truncation_length:]
-
-        return input_ids.cuda()
+        # fix support cpu
+        # return input_ids.cuda()
+        # mac intel not support mps
+        # device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return input_ids.to(device)
+        
 
     def decode(self, output_ids):
         reply = self.checkPoint.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -140,6 +146,10 @@ class LLamaLLMChain(BaseAnswer, Chain, ABC):
         if self.logits_processor is None:
             self.logits_processor = LogitsProcessorList()
         self.logits_processor.append(InvalidScoreLogitsProcessor())
+        #print(f"dir(tokenizer)={dir(self.checkPoint.tokenizer)}")
+        #print(f"dir(tokenizer.encode)={dir(self.checkPoint.tokenizer.encode)}")
+        #print(f"dir(tokenizer.decode)={dir(self.checkPoint.tokenizer.decode)}")
+        #print(f"dir(tokenizer.llama)={dir(self.checkPoint.tokenizer.llama)}")
 
         gen_kwargs = {
             "max_new_tokens": self.max_new_tokens,
@@ -151,11 +161,16 @@ class LLamaLLMChain(BaseAnswer, Chain, ABC):
             "encoder_repetition_penalty": self.encoder_repetition_penalty,
             "min_length": self.min_length,
             "temperature": self.temperature,
-            "eos_token_id": self.checkPoint.tokenizer.eos_token_id,
+            "eos_token_id": getattr(self.checkPoint.tokenizer, 'eos_token_id', None),
             "logits_processor": self.logits_processor}
-
+        
+        # tokenizer.llama.xxx: token_eos, token_bos, tokenize
+        if getattr(self.checkPoint.tokenizer,'llama',None):
+            gen_kwargs.update({'token_eos': self.checkPoint.tokenizer.llama.token_eos})
+            gen_kwargs.update({'token_bos': self.checkPoint.tokenizer.llama.token_bos})
+          
         #  向量转换
-        input_ids = self.encode(soft_prompt, add_bos_token=self.checkPoint.tokenizer.add_bos_token,
+        input_ids = self.encode(soft_prompt, add_bos_token=getattr(self.checkPoint.tokenizer, 'add_bos_token', True),
                                 truncation_length=self.max_new_tokens)
 
         gen_kwargs.update({'inputs': input_ids})

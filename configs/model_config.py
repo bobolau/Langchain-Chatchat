@@ -235,26 +235,30 @@ llm_model_dict = {
         "api_key": openaiChatgptApiKey
     },
 
-     # baseDir=/Users/bobo/workspace/ai/models
-     "chinese-Llama-2-7b-ggml-q4": {
-        "name": "chinese-Llama-2-7b-ggml-q4",
-        "pretrained_model_name": "chinese-Llama-2-7b-ggml-q4",
-        "provides": "ChatGLMLLMChain",
-        "local_model_path": modelBaseDir + "chinese-Llama-2-7b-ggml-q4"
-    },
     "chinese-alpaca-2-7b": {
         "name": "chinese-alpaca-2-7b",
         "pretrained_model_name": "chinese-alpaca-2-7b",
-        "provides": "ChatGLMLLMChain",
+        "provides": "LLamaLLMChain",
         "local_model_path": modelBaseDir + "chinese-alpaca-2-7b"
+    },
+     "chinese-alpaca-2-7b-ggml": {
+        "name": "chinese-alpaca-2-7b-ggml",
+        "pretrained_model_name": "chinese-alpaca-2-7b-ggml",
+        "provides": "LLamaLLMChain",
+        "local_model_path": modelBaseDir + "chinese-alpaca-2-7b-ggml"
+    },
+    "chinese-Llama-2-7b-ggml-q4": {
+        "name": "chinese-Llama-2-7b-ggml-q4",
+        "pretrained_model_name": "chinese-Llama-2-7b-ggml-q4",
+        "provides": "LLamaLLMChain",
+        "local_model_path": modelBaseDir + "chinese-Llama-2-7b-ggml-q4"
     },
    
 }
 
 # LLM 名称
-
 LLM_MODEL = "openai-chatgpt-3.5"
-#LLM_MODEL = "chatglm2-6b-int4"
+# LLM_MODEL = "chinese-alpaca-2-7b-ggml"
 # LLM_MODEL = "chatglm2-6b-32k"
 # 量化加载8bit 模型
 LOAD_IN_8BIT = False
@@ -275,7 +279,9 @@ STREAMING = True
 USE_PTUNING_V2 = False
 PTUNING_DIR='./ptuning-v2'
 # LLM running device
-LLM_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+# # mac intel not support mps
+#LLM_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+LLM_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # 知识库默认存储路径
 KB_ROOT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base")
